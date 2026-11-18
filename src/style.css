@@ -119,8 +119,8 @@ p { line-height: 1.65; }
 .desk-intro > div:first-child { min-width: 0; }
 .source-name { color: var(--subtle); margin-top: .26rem; overflow-wrap: anywhere; }
 .upload-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .55rem; }
-.sample-link { flex-basis: 100%; text-align: right; color: #bcc9ff; font-size: .87rem; text-underline-offset: 3px; }
-.feedback { min-height: 2rem; color: var(--lime); font-size: .9rem; padding-block: .32rem; }
+.sample-links { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .35rem .85rem; color: #bcc9ff; font-size: .87rem; text-underline-offset: 3px; }
+.feedback { min-height: 2rem; color: var(--lime); font-size: .9rem; padding-block: .32rem; overflow-wrap: anywhere; }
 .error { white-space: pre-line; margin-bottom: 1rem; padding: .85rem 1rem; border: 1px solid var(--coral); border-radius: 8px; color: #ffd0cb; background: #341f36; }
 .overview { display: grid; grid-template-columns: .9fr 1.2fr; gap: 1.1rem; }
 .metrics { display: grid; grid-template-columns: 1fr 1fr; background: #19254d; border: 1px solid #3c4c86; border-radius: 16px; overflow: hidden; }
@@ -251,7 +251,7 @@ dialog::backdrop { background: #06091eb0; }
   .workspace { padding-block: 1.15rem 2rem; }
   .desk-intro, .desk-footer { align-items: flex-start; flex-direction: column; }
   .upload-controls { justify-content: flex-start; }
-  .sample-link { text-align: left; }
+  .sample-links { justify-content: flex-start; }
   .overview { grid-template-columns: 1fr; gap: .7rem; }
   .metrics > div { padding: .68rem .72rem; }
   .work-tabs { margin-top: .8rem; }

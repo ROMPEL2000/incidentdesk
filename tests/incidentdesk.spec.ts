@@ -63,8 +63,19 @@ test('preview in repository subfolder analyzes uploads without sending file cont
   await page.goto('./#desk')
   await expect(page.getByRole('heading', { name: 'Рабочий стол' })).toBeVisible()
   if (screenshot('workspace')) await page.screenshot({ path: screenshot('workspace') })
-  const [sample] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Скачать пример CSV' }).click()])
+  const [sample] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Учебный CSV (20 событий)' }).click()])
   expect(readFileSync((await sample.path())!, 'utf8')).toContain(csvHeader)
+  const uploadThroughPicker = async (path: string) => {
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', { name: 'Загрузить CSV', exact: true }).click()])
+    await chooser.setFiles(path)
+  }
+  await uploadThroughPicker((await sample.path())!)
+  await expect(page.locator('.feedback')).toContainText('Записи совпадают с предыдущим журналом. Событий: 20 · Предупреждений: 3.')
+  const [oneLogin] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Проверочный CSV (1 событие)' }).click()])
+  await uploadThroughPicker((await oneLogin.path())!)
+  await expect(page.locator('.feedback')).toContainText('Сводка обновлена. Событий: 1 · Предупреждений: 0.')
+  await expect(page.getByText('Правила не сработали', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Вернуть демо' }).click()
   const requests: string[] = []
   page.on('request', (request) => {
     if (request.method() !== 'GET' || !request.url().startsWith('http://127.0.0.1:4173/incidentdesk/')) requests.push(request.url())
@@ -74,6 +85,7 @@ test('preview in repository subfolder analyzes uploads without sending file cont
   })
   await upload('broken.csv', csvHeader + '\n2026-11-18,alice,300.1.1.1,login,success')
   await expect(page.getByRole('alert')).toContainText('Строка 2')
+  await expect(page.getByRole('alert')).toContainText('Сейчас открыт «Учебный журнал».')
   await expect(page.getByText('Учебный журнал', { exact: true })).toBeVisible()
   await upload('oversize.csv', Buffer.alloc(1024 * 1024 + 1))
   await expect(page.getByRole('alert')).toContainText('1 МиБ')

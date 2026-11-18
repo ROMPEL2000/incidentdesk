@@ -1,0 +1,2 @@
+timestamp,user,ip,event_type,result
+2026-11-18T07:00:00Z,alice,192.0.2.10,login,success

@@ -5,6 +5,7 @@ import { rules, type Alert } from './detection.ts'
 import { Brand, rangeText, EventsTable, Icon, Timeline } from './presentation.tsx'
 import { clearReviews, MAX_NOTE, readReviews, removeReview, report, verdicts, writeReview, type Review, type Reviews, type Verdict } from './review.ts'
 import demoUrl from './demo.csv?url&no-inline'
+import sampleUrl from './one-login.csv?url&no-inline'
 
 const PAGE_SIZE = 25
 const noFilter = { search: '', result: '', type: '' }
@@ -84,11 +85,11 @@ function Drawer({ alert, review, onClose, onSave, onDelete, onEvidence }: {
 }
 
 type DeskProps = {
-  analysis: Analysis; label: string; imported: boolean; loading: boolean; error: string; notice: string
+  analysis: Analysis; label: string; imported: boolean; pendingFile: string; error: string; notice: string
   initialAlert?: string; onImport: (file: File) => void; onDemo: () => void
 }
 
-export function Desk({ analysis, label, imported, loading, error, notice, initialAlert, onImport, onDemo }: DeskProps) {
+export function Desk({ analysis, label, imported, pendingFile, error, notice, initialAlert, onImport, onDemo }: DeskProps) {
   const [view, setView] = useState<'alerts' | 'events'>('alerts')
   const [selected, setSelected] = useState(initialAlert ?? '')
   const [evidence, setEvidence] = useState<Alert>()
@@ -125,8 +126,8 @@ export function Desk({ analysis, label, imported, loading, error, notice, initia
   }, [analysis])
 
   useEffect(() => {
-    if (notice.startsWith('Журнал загружен')) uploadButton.current?.focus({ preventScroll: true })
-  }, [notice])
+    if (imported) uploadButton.current?.focus({ preventScroll: true })
+  }, [imported])
 
   function closeDrawer(showEvidence = false) {
     if (showEvidence && alert) {
@@ -180,11 +181,14 @@ export function Desk({ analysis, label, imported, loading, error, notice, initia
             if (file) { setStatus(''); onImport(file) }
             event.target.value = ''
           }} />
-          <button className="button button-primary" type="button" onClick={() => upload.current?.click()} ref={uploadButton}><Icon name="upload" size={18} /> {loading ? 'Выбрать другой CSV' : 'Загрузить CSV'}</button>
-          <a className="sample-link" href={demoUrl} download="incidentdesk-demo.csv">Скачать пример CSV</a>
+          <button className="button button-primary" type="button" onClick={() => upload.current?.click()} ref={uploadButton}><Icon name="upload" size={18} /> {pendingFile ? 'Выбрать другой CSV' : 'Загрузить CSV'}</button>
+          <div className="sample-links">
+            <a href={demoUrl} download="incidentdesk-demo.csv">Учебный CSV (20 событий)</a>
+            <a href={sampleUrl} download="one-login.csv">Проверочный CSV (1 событие)</a>
+          </div>
         </div>
       </div>
-      <div className="feedback" aria-live="polite">{loading ? 'Проверяем и анализируем журнал…' : status || notice}</div>
+      <div className="feedback" aria-live="polite">{pendingFile ? `Проверяем файл «${pendingFile}»…` : status || notice}</div>
       {(error || storageError) && <div className="error" role="alert">{[error, storageError].filter(Boolean).join('\n')}</div>}
       <section className="overview" aria-label="Сводка по журналу">
         <div className="metrics">

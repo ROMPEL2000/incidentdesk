@@ -11,7 +11,7 @@ export function App() {
   const [demo, setDemo] = useState<Analysis>()
   const [source, setSource] = useState<{ data: Analysis; label: string }>()
   const [hash, setHash] = useState(location.hash)
-  const [loading, setLoading] = useState(false)
+  const [pendingFile, setPendingFile] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [revision, setRevision] = useState(0)
@@ -20,7 +20,7 @@ export function App() {
   function stopImport() {
     worker.current?.terminate()
     worker.current = null
-    setLoading(false)
+    setPendingFile('')
   }
 
   useEffect(() => {
@@ -57,14 +57,18 @@ export function App() {
     stopImport()
     setError('')
     setNotice('')
+    const previous = source ?? (demo && { data: demo, label: 'Учебный журнал' })
+    const showError = (message: string) => {
+      setError(`Файл «${file.name}» не загружен.${previous ? ` Сейчас открыт «${previous.label}».` : ''}\n${message}`)
+    }
     if (file.size > MAX_BYTES) {
-      setError('Размер CSV превышает 1 МиБ. Разделите журнал на файлы меньшего размера.')
+      showError('Размер CSV превышает 1 МиБ. Разделите журнал на файлы меньшего размера.')
       return
     }
-    setLoading(true)
+    setPendingFile(file.name)
     function fail(message: string) {
       stopImport()
-      setError(message)
+      showError(message)
     }
     try {
       const instance = new Worker(new URL('./import.worker.ts', import.meta.url), { type: 'module' })
@@ -76,7 +80,12 @@ export function App() {
           stopImport()
           setSource({ data: data.data, label: file.name })
           setRevision((value) => value + 1)
-          setNotice('Журнал загружен. Анализ завершён.')
+          const { events, alerts, key } = data.data
+          const sameData = key === previous?.data.key
+          const summary = `Событий: ${events.length} · Предупреждений: ${alerts.length}.`
+          setNotice(sameData
+            ? `Файл «${file.name}» открыт. Записи совпадают с предыдущим журналом. ${summary}`
+            : `Файл «${file.name}» открыт. Сводка обновлена. ${summary}`)
         }
       }
       instance.onerror = () => {
@@ -93,7 +102,7 @@ export function App() {
   if (!desk) return <Landing alert={primary} />
   return <Desk key={revision} analysis={source?.data ?? demo} label={source?.label ?? 'Учебный журнал'}
     imported={Boolean(source)} initialAlert={hash === '#case' && !source ? primary.id : undefined}
-    loading={loading} error={error} notice={notice} onImport={importCsv} onDemo={() => {
+    pendingFile={pendingFile} error={error} notice={notice} onImport={importCsv} onDemo={() => {
       stopImport()
       setSource(undefined)
       setError('')
